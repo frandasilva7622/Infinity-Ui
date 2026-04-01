@@ -1,0 +1,557 @@
+-- ============================================
+-- NOME: Infinity UI
+-- AUTOR: B3 Coringa
+-- VERSÃO: 1.0
+-- DESCRIÇÃO: Biblioteca de interface personalizável para Roblox
+--            Crie painéis bonitos com controle total sobre cores,
+--            fontes, tamanhos e estilos. Ideal para quem quer
+--            liberdade criativa nos seus scripts.
+-- ============================================
+
+-- ============================================
+-- CONFIGURAÇÕES GLOBAIS (VOCÊ PODE PERSONALIZAR TUDO!)
+-- ============================================
+local InfinityUI = {}
+
+-- ============================================
+-- PALETA DE CORES (MUDE AQUI PARA ALTERAR O TEMA)
+-- ============================================
+InfinityUI.Cores = {
+    -- Cores principais do painel
+    FundoPrincipal = Color3.fromRGB(18, 18, 25),      -- Fundo escuro suave
+    FundoSecundario = Color3.fromRGB(25, 25, 35),      -- Fundo alternativo
+    BarraTitulo = Color3.fromRGB(88, 55, 180),         -- Roxo para a barra
+    
+    -- Cores dos botões
+    BotaoNormal = Color3.fromRGB(55, 65, 95),           -- Azul acinzentado
+    BotaoHover = Color3.fromRGB(75, 85, 115),           -- Mais claro ao tocar
+    BotaoAtivo = Color3.fromRGB(100, 80, 200),          -- Roxo quando ativo
+    
+    -- Cores do Toggle (interruptor)
+    ToggleOff = Color3.fromRGB(200, 70, 70),            -- Vermelho (desligado)
+    ToggleOn = Color3.fromRGB(70, 200, 70),             -- Verde (ligado)
+    
+    -- Cores do Slider (controle deslizante)
+    SliderTrilho = Color3.fromRGB(80, 80, 100),         -- Trilho cinza
+    SliderPreenchido = Color3.fromRGB(120, 90, 220),    -- Roxo preenchido
+    SliderBotao = Color3.fromRGB(255, 255, 255),        -- Botão branco
+    
+    -- Cores dos textos
+    TextoPrincipal = Color3.fromRGB(255, 255, 255),     -- Branco
+    TextoSecundario = Color3.fromRGB(180, 180, 200),    -- Cinza claro
+    TextoTitulo = Color3.fromRGB(255, 255, 255),        -- Branco
+    
+    -- Cores de borda e divisores
+    Borda = Color3.fromRGB(88, 55, 180),                -- Borda roxa
+    Divisor = Color3.fromRGB(60, 60, 80),               -- Divisor cinza
+    
+    -- Efeito de fundo escuro (quando a janela abre)
+    FundoEscuro = Color3.fromRGB(0, 0, 0),
+}
+
+-- ============================================
+-- ESTILOS E DIMENSÕES (MUDE PARA ALTERAR O VISUAL)
+-- ============================================
+InfinityUI.Estilo = {
+    -- Bordas arredondadas
+    RaioBordaGrande = 16,      -- Cantos da janela
+    RaioBordaMedio = 12,        -- Cantos de frames grandes
+    RaioBordaPequeno = 8,       -- Cantos de botões e toggles
+    
+    -- Fontes
+    FonteTitulo = Enum.Font.GothamBold,
+    FonteBotao = Enum.Font.GothamBold,
+    FonteTexto = Enum.Font.Gotham,
+    FonteToggle = Enum.Font.GothamBold,
+    
+    -- Tamanhos de fonte
+    TamanhoTitulo = 18,
+    TamanhoBotao = 16,
+    TamanhoTexto = 14,
+    TamanhoToggle = 14,
+    
+    -- Dimensões dos elementos
+    LarguraJanela = 380,
+    AlturaJanela = 520,
+    AlturaBarraTitulo = 48,
+    AlturaBotao = 48,
+    AlturaToggle = 48,
+    AlturaSlider = 75,
+    AlturaSecao = 40,
+    AlturaInput = 48,
+    
+    -- Espaçamentos
+    Padding = 12,
+    PaddingPequeno = 8,
+    
+    -- Transparências
+    TransparenciaFundo = 0,
+    TransparenciaEscuro = 0.6,
+}
+
+-- ============================================
+-- FUNÇÃO AUXILIAR: Criar cantos arredondados
+-- ============================================
+local function criarCanto(objeto, raio)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, raio)
+    corner.Parent = objeto
+    return corner
+end
+
+-- ============================================
+-- FUNÇÃO AUXILIAR: Criar sombra
+-- ============================================
+local function criarSombra(objeto)
+    local shadow = Instance.new("UIShadow")
+    shadow.Parent = objeto
+    return shadow
+end
+
+-- ============================================
+-- FUNÇÃO: Criar Janela Principal
+-- ============================================
+--[[
+    USO:
+    local janela = InfinityUI.CriarJanela({
+        Titulo = "Meu Hub",
+        Largura = 400,
+        Altura = 500,
+        CorFundo = Color3.fromRGB(20, 20, 30),
+        CorBarra = Color3.fromRGB(100, 70, 200)
+    })
+--]]
+function InfinityUI.CriarJanela(config)
+    -- Configurações com valores padrão
+    config = config or {}
+    local titulo = config.Titulo or "Infinity UI"
+    local corFundo = config.CorFundo or InfinityUI.Cores.FundoPrincipal
+    local corBarra = config.CorBarra or InfinityUI.Cores.BarraTitulo
+    local corTexto = config.CorTexto or InfinityUI.Cores.TextoTitulo
+    local largura = config.Largura or InfinityUI.Estilo.LarguraJanela
+    local altura = config.Altura or InfinityUI.Estilo.AlturaJanela
+    local raioBorda = config.RaioBorda or InfinityUI.Estilo.RaioBordaGrande
+    local arrastavel = config.Arrastavel == nil and true or config.Arrastavel
+    
+    -- Criar ScreenGui
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "InfinityUI_" .. titulo
+    gui.Parent = game.Players.LocalPlayer.PlayerGui
+    
+    -- Fundo escuro (efeito de modal)
+    local escuro = Instance.new("Frame")
+    escuro.Size = UDim2.new(1, 0, 1, 0)
+    escuro.BackgroundColor3 = InfinityUI.Cores.FundoEscuro
+    escuro.BackgroundTransparency = InfinityUI.Estilo.TransparenciaEscuro
+    escuro.BorderSizePixel = 0
+    escuro.Parent = gui
+    
+    -- Janela principal
+    local janela = Instance.new("Frame")
+    janela.Size = UDim2.new(0, largura, 0, altura)
+    janela.Position = UDim2.new(0.5, -largura/2, 0.5, -altura/2)
+    janela.BackgroundColor3 = corFundo
+    janela.BackgroundTransparency = InfinityUI.Estilo.TransparenciaFundo
+    janela.BorderSizePixel = 0
+    janela.ClipsDescendants = true
+    janela.Parent = gui
+    
+    criarCanto(janela, raioBorda)
+    
+    -- Borda decorativa
+    local borda = Instance.new("Frame")
+    borda.Size = UDim2.new(1, 0, 1, 0)
+    borda.BackgroundTransparency = 1
+    borda.BorderSizePixel = 2
+    borda.BorderColor3 = InfinityUI.Cores.Borda
+    borda.Parent = janela
+    
+    criarCanto(borda, raioBorda)
+    
+    -- Barra de título
+    local barra = Instance.new("Frame")
+    barra.Size = UDim2.new(1, 0, 0, InfinityUI.Estilo.AlturaBarraTitulo)
+    barra.BackgroundColor3 = corBarra
+    barra.BackgroundTransparency = InfinityUI.Estilo.TransparenciaFundo
+    barra.BorderSizePixel = 0
+    barra.Parent = janela
+    
+    criarCanto(barra, raioBorda)
+    
+    -- Texto do título
+    local texto = Instance.new("TextLabel")
+    texto.Size = UDim2.new(1, -50, 1, 0)
+    texto.Position = UDim2.new(0, InfinityUI.Estilo.Padding, 0, 0)
+    texto.Text = titulo
+    texto.TextColor3 = corTexto
+    texto.BackgroundTransparency = 1
+    texto.Font = InfinityUI.Estilo.FonteTitulo
+    texto.TextSize = InfinityUI.Estilo.TamanhoTitulo
+    texto.TextXAlignment = Enum.TextXAlignment.Left
+    texto.Parent = barra
+    
+    -- Botão fechar
+    local fechar = Instance.new("TextButton")
+    fechar.Size = UDim2.new(0, 32, 0, 32)
+    fechar.Position = UDim2.new(1, -42, 0, 8)
+    fechar.Text = "✕"
+    fechar.TextColor3 = InfinityUI.Cores.TextoPrincipal
+    fechar.BackgroundColor3 = InfinityUI.Cores.ToggleOff
+    fechar.Font = InfinityUI.Estilo.FonteBotao
+    fechar.TextSize = 18
+    fechar.BorderSizePixel = 0
+    fechar.Parent = barra
+    
+    criarCanto(fechar, InfinityUI.Estilo.RaioBordaPequeno)
+    
+    -- Área de conteúdo (com rolagem)
+    local conteudo = Instance.new("Frame")
+    conteudo.Size = UDim2.new(1, 0, 1, -InfinityUI.Estilo.AlturaBarraTitulo)
+    conteudo.Position = UDim2.new(0, 0, 0, InfinityUI.Estilo.AlturaBarraTitulo)
+    conteudo.BackgroundTransparency = 1
+    conteudo.Parent = janela
+    
+    -- ScrollingFrame para rolagem
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1, 0, 1, 0)
+    scroll.BackgroundTransparency = 1
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scroll.ScrollBarThickness = 4
+    scroll.ScrollBarImageColor3 = InfinityUI.Cores.Borda
+    scroll.BorderSizePixel = 0
+    scroll.Parent = conteudo
+    
+    -- Layout automático
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, InfinityUI.Estilo.Padding)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = scroll
+    
+    -- Atualizar canvas quando adicionar elementos
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + InfinityUI.Estilo.Padding)
+    end)
+    
+    -- Função para fechar a janela
+    fechar.MouseButton1Click:Connect(function()
+        gui:Destroy()
+    end)
+    
+    -- Sistema de arrastar (para celular)
+    if arrastavel then
+        local arrastando = false
+        local posInicialMouse
+        local posInicialJanela
+        
+        barra.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or 
+               input.UserInputType == Enum.UserInputType.MouseButton1 then
+                arrastando = true
+                posInicialMouse = input.Position
+                posInicialJanela = janela.Position
+            end
+        end)
+        
+        game:GetService("UserInputService").InputChanged:Connect(function(input)
+            if arrastando then
+                if input.UserInputType == Enum.UserInputType.Touch or
+                   input.UserInputType == Enum.UserInputType.MouseMovement then
+                    local delta = input.Position - posInicialMouse
+                    janela.Position = UDim2.new(
+                        posInicialJanela.X.Scale, 
+                        posInicialJanela.X.Offset + delta.X,
+                        posInicialJanela.Y.Scale, 
+                        posInicialJanela.Y.Offset + delta.Y
+                    )
+                end
+            end
+        end)
+        
+        game:GetService("UserInputService").InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or
+               input.UserInputType == Enum.UserInputType.MouseButton1 then
+                arrastando = false
+            end
+        end)
+    end
+    
+    -- Retornar objeto com funções úteis
+    return {
+        gui = gui,
+        scroll = scroll,
+        layout = layout,
+        Fechar = function()
+            gui:Destroy()
+        end,
+        DefinirTitulo = function(novoTitulo)
+            texto.Text = novoTitulo
+        end,
+        DefinirCorFundo = function(cor)
+            janela.BackgroundColor3 = cor
+        end,
+        DefinirCorBarra = function(cor)
+            barra.BackgroundColor3 = cor
+        end
+    }
+end
+
+-- ============================================
+-- FUNÇÃO: Criar Seção (Título Divisório)
+-- ============================================
+--[[
+    USO:
+    InfinityUI.CriarSecao(janela, "⚙️ Configurações")
+--]]
+function InfinityUI.CriarSecao(parent, texto)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -InfinityUI.Estilo.Padding * 2, 0, InfinityUI.Estilo.AlturaSecao)
+    frame.Position = UDim2.new(0, InfinityUI.Estilo.Padding, 0, 0)
+    frame.BackgroundTransparency = 1
+    frame.Parent = parent.scroll
+    
+    -- Linha decorativa
+    local linha = Instance.new("Frame")
+    linha.Size = UDim2.new(1, 0, 0, 1)
+    linha.Position = UDim2.new(0, 0, 0, InfinityUI.Estilo.AlturaSecao/2)
+    linha.BackgroundColor3 = InfinityUI.Cores.Divisor
+    linha.Parent = frame
+    
+    -- Texto da seção
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 0, 1, 0)
+    label.Position = UDim2.new(0, InfinityUI.Estilo.Padding, 0, 0)
+    label.Text = texto
+    label.TextColor3 = InfinityUI.Cores.TextoSecundario
+    label.BackgroundTransparency = 1
+    label.Font = InfinityUI.Estilo.FonteTexto
+    label.TextSize = InfinityUI.Estilo.TamanhoTexto
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.AutoSize = Enum.AutoSize.X
+    label.Parent = frame
+    
+    return frame
+end
+
+-- ============================================
+-- FUNÇÃO: Criar Botão
+-- ============================================
+--[[
+    USO:
+    InfinityUI.CriarBotao(janela, "Clique Aqui", function()
+        print("Clicou!")
+    end)
+--]]
+function InfinityUI.CriarBotao(parent, texto, callback)
+    local botao = Instance.new("TextButton")
+    botao.Size = UDim2.new(1, -InfinityUI.Estilo.Padding * 2, 0, InfinityUI.Estilo.AlturaBotao)
+    botao.Position = UDim2.new(0, InfinityUI.Estilo.Padding, 0, 0)
+    botao.Text = texto
+    botao.TextColor3 = InfinityUI.Cores.TextoPrincipal
+    botao.BackgroundColor3 = InfinityUI.Cores.BotaoNormal
+    botao.Font = InfinityUI.Estilo.FonteBotao
+    botao.TextSize = InfinityUI.Estilo.TamanhoBotao
+    botao.BorderSizePixel = 0
+    botao.Parent = parent.scroll
+    
+    criarCanto(botao, InfinityUI.Estilo.RaioBordaMedio)
+    
+    -- Efeito de hover/toque
+    botao.MouseButton1Down:Connect(function()
+        botao.BackgroundColor3 = InfinityUI.Cores.BotaoHover
+    end)
+    
+    botao.MouseButton1Up:Connect(function()
+        botao.BackgroundColor3 = InfinityUI.Cores.BotaoNormal
+    end)
+    
+    -- Evento de clique
+    botao.MouseButton1Click:Connect(callback)
+    
+    return botao
+end
+
+-- ============================================
+-- FUNÇÃO: Criar Botão com Efeito (com cor personalizada)
+-- ============================================
+function InfinityUI.CriarBotaoPersonalizado(parent, texto, cor, callback)
+    local botao = Instance.new("TextButton")
+    botao.Size = UDim2.new(1, -InfinityUI.Estilo.Padding * 2, 0, InfinityUI.Estilo.AlturaBotao)
+    botao.Position = UDim2.new(0, InfinityUI.Estilo.Padding, 0, 0)
+    botao.Text = texto
+    botao.TextColor3 = InfinityUI.Cores.TextoPrincipal
+    botao.BackgroundColor3 = cor or InfinityUI.Cores.BotaoNormal
+    botao.Font = InfinityUI.Estilo.FonteBotao
+    botao.TextSize = InfinityUI.Estilo.TamanhoBotao
+    botao.BorderSizePixel = 0
+    botao.Parent = parent.scroll
+    
+    criarCanto(botao, InfinityUI.Estilo.RaioBordaMedio)
+    
+    botao.MouseButton1Click:Connect(callback)
+    
+    return botao
+end
+
+-- ============================================
+-- FUNÇÃO: Criar Toggle (Interruptor)
+-- ============================================
+--[[
+    USO:
+    local aimbotToggle = InfinityUI.CriarToggle(janela, "Aimbot", function(estado)
+        if estado then
+            print("Aimbot ligado")
+        else
+            print("Aimbot desligado")
+        end
+    end)
+--]]
+function InfinityUI.CriarToggle(parent, texto, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -InfinityUI.Estilo.Padding * 2, 0, InfinityUI.Estilo.AlturaToggle)
+    frame.Position = UDim2.new(0, InfinityUI.Estilo.Padding, 0, 0)
+    frame.BackgroundColor3 = InfinityUI.Cores.FundoSecundario
+    frame.BorderSizePixel = 0
+    frame.Parent = parent.scroll
+    
+    criarCanto(frame, InfinityUI.Estilo.RaioBordaMedio)
+    
+    -- Texto do toggle
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Position = UDim2.new(0, InfinityUI.Estilo.Padding, 0, 0)
+    label.Text = texto
+    label.TextColor3 = InfinityUI.Cores.TextoPrincipal
+    label.BackgroundTransparency = 1
+    label.Font = InfinityUI.Estilo.FonteTexto
+    label.TextSize = InfinityUI.Estilo.TamanhoTexto
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    -- Botão do toggle
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 65, 0, 32)
+    toggleBtn.Position = UDim2.new(1, -80, 0, 8)
+    toggleBtn.Text = "OFF"
+    toggleBtn.TextColor3 = InfinityUI.Cores.TextoPrincipal
+    toggleBtn.BackgroundColor3 = InfinityUI.Cores.ToggleOff
+    toggleBtn.Font = InfinityUI.Estilo.FonteToggle
+    toggleBtn.TextSize = InfinityUI.Estilo.TamanhoToggle
+    toggleBtn.BorderSizePixel = 0
+    toggleBtn.Parent = frame
+    
+    criarCanto(toggleBtn, InfinityUI.Estilo.RaioBordaPequeno)
+    
+    local estado = false
+    
+    toggleBtn.MouseButton1Click:Connect(function()
+        estado = not estado
+        if estado then
+            toggleBtn.Text = "ON"
+            toggleBtn.BackgroundColor3 = InfinityUI.Cores.ToggleOn
+        else
+            toggleBtn.Text = "OFF"
+            toggleBtn.BackgroundColor3 = InfinityUI.Cores.ToggleOff
+        end
+        callback(estado)
+    end)
+    
+    -- Retornar objeto com funções extras
+    return {
+        Definir = function(valor)
+            estado = valor
+            if estado then
+                toggleBtn.Text = "ON"
+                toggleBtn.BackgroundColor3 = InfinityUI.Cores.ToggleOn
+            else
+                toggleBtn.Text = "OFF"
+                toggleBtn.BackgroundColor3 = InfinityUI.Cores.ToggleOff
+            end
+            callback(estado)
+        end,
+        Obter = function()
+            return estado
+        end
+    }
+end
+
+-- ============================================
+-- FUNÇÃO: Criar Slider (Controle Deslizante)
+-- ============================================
+--[[
+    USO:
+    local fovSlider = InfinityUI.CriarSlider(janela, "FOV", 50, 300, 150, function(valor)
+        print("FOV: " .. valor)
+    end)
+--]]
+function InfinityUI.CriarSlider(parent, texto, min, max, valorInicial, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -InfinityUI.Estilo.Padding * 2, 0, InfinityUI.Estilo.AlturaSlider)
+    frame.Position = UDim2.new(0, InfinityUI.Estilo.Padding, 0, 0)
+    frame.BackgroundColor3 = InfinityUI.Cores.FundoSecundario
+    frame.BorderSizePixel = 0
+    frame.Parent = parent.scroll
+    
+    criarCanto(frame, InfinityUI.Estilo.RaioBordaMedio)
+    
+    -- Texto do slider
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -InfinityUI.Estilo.Padding * 2, 0, 25)
+    label.Position = UDim2.new(0, InfinityUI.Estilo.Padding, 0, 8)
+    label.Text = texto .. ": " .. tostring(valorInicial)
+    label.TextColor3 = InfinityUI.Cores.TextoPrincipal
+    label.BackgroundTransparency = 1
+    label.Font = InfinityUI.Estilo.FonteTexto
+    label.TextSize = InfinityUI.Estilo.TamanhoTexto
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    -- Trilho do slider
+    local trilho = Instance.new("Frame")
+    trilho.Size = UDim2.new(1, -InfinityUI.Estilo.Padding * 2, 0, 4)
+    trilho.Position = UDim2.new(0, InfinityUI.Estilo.Padding, 0, 42)
+    trilho.BackgroundColor3 = InfinityUI.Cores.SliderTrilho
+    trilho.BorderSizePixel = 0
+    trilho.Parent = frame
+    
+    criarCanto(trilho, 2)
+    
+    -- Parte preenchida do slider
+    local preenchido = Instance.new("Frame")
+    local porcentagem = (valorInicial - min) / (max - min)
+    preenchido.Size = UDim2.new(porcentagem, 0, 1, 0)
+    preenchido.BackgroundColor3 = InfinityUI.Cores.SliderPreenchido
+    preenchido.BorderSizePixel = 0
+    preenchido.Parent = trilho
+    
+    -- Botão do slider
+    local botaoSlider = Instance.new("TextButton")
+    botaoSlider.Size = UDim2.new(0, 22, 0, 22)
+    botaoSlider.Position = UDim2.new(porcentagem, -11, 0, -9)
+    botaoSlider.Text = ""
+    botaoSlider.BackgroundColor3 = InfinityUI.Cores.SliderBotao
+    botaoSlider.BorderSizePixel = 0
+    botaoSlider.Parent = frame
+    
+    criarCanto(botaoSlider, 11)
+    
+    local valor = valorInicial
+    local arrastando = false
+    
+    local function atualizar(xPos)
+        local largura = trilho.AbsoluteSize.X
+        local posLocal = xPos - trilho.AbsolutePosition.X
+        local novaPorcentagem = math.clamp(posLocal / largura, 0, 1)
+        valor = min + (max - min) * novaPorcentagem
+        valor = math.floor(valor * 10) / 10
+        
+        preenchido.Size = UDim2.new(novaPorcentagem, 0, 1, 0)
+        botaoSlider.Position = UDim2.new(novaPorcentagem, -11, 0, -9)
+        label.Text = texto .. ": " .. tostring(valor)
+        
+        callback(valor)
+    end
+    
+    botaoSlider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or
+           input.UserInputType == Enum.UserInputType.MouseButton1 then
+            arrastando = tru
